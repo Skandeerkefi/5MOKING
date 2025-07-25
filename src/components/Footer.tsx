@@ -94,9 +94,18 @@ export function Footer() {
 				</div>
 
 				<div className='pt-4 mt-8 text-sm text-center border-t border-white/10 text-muted-foreground'>
-					<p className='flex items-center justify-center'>
-						© {currentYear} 5MOKING. Made with{" "}
-						<Heart className='w-3 h-3 mx-1 text-red-500' /> for the community.
+					<p className='flex flex-wrap items-center justify-center gap-1 text-sm'>
+						© {currentYear} 5MOKING. Made with
+						<Heart className='w-3 h-3 mx-1 text-red-500' />
+						for the community by
+						<a
+							href='https://www.linkedin.com/in/skander-kefi/'
+							target='_blank'
+							rel='noreferrer'
+							className='font-medium text-primary hover:underline'
+						>
+							Skander
+						</a>
 					</p>
 				</div>
 			</div>
