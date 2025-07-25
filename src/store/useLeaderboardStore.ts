@@ -6,6 +6,7 @@ export interface LeaderboardPlayer {
 	rank: number;
 	username: string;
 	wager: number;
+
 	isFeatured?: boolean;
 }
 
@@ -63,7 +64,7 @@ const processApiData = (data: any): LeaderboardPlayer[] => {
 			rank: index + 1,
 			username: item.username,
 			wager: parseFloat(item.wagered_amount) || 0,
-			// The API response doesn't show profit, set to 0 or adjust if needed
+			profit: 0, // The API response doesn't show profit, set to 0 or adjust if needed
 			isFeatured: item.username.toLowerCase().includes("5moking"),
 		}))
 		.sort((a: any, b: any) => b.wager - a.wager) // Sort by wager descending
