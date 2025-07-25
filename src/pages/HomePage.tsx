@@ -12,17 +12,21 @@ import { useSlotCallStore } from "@/store/useSlotCallStore";
 import { useGiveawayStore } from "@/store/useGiveawayStore";
 
 function HomePage() {
-	const { weeklyLeaderboard } = useLeaderboardStore();
 	const { slotCalls } = useSlotCallStore();
 	const { giveaways } = useGiveawayStore();
-
+	const { weeklyLeaderboard, fetchLeaderboard } = useLeaderboardStore();
 	// Display only the first few items on the homepage
 	const topLeaderboard = weeklyLeaderboard.slice(0, 5);
 	const recentSlotCalls = slotCalls.slice(0, 3);
 	const activeGiveaways = giveaways
 		.filter((g) => g.status === "active")
 		.slice(0, 2);
-
+	useEffect(() => {
+		// Only fetch if the leaderboard is empty (optional check)
+		if (weeklyLeaderboard.length === 0) {
+			fetchLeaderboard("weekly");
+		}
+	}, []);
 	return (
 		<div className='flex flex-col min-h-screen bg-background'>
 			<Navbar />
