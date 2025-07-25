@@ -88,7 +88,7 @@ export const useLeaderboardStore = create<LeaderboardState>((set, get) => ({
 			const { start_at, end_at } = getDateRange(period);
 
 			const response = await fetch(
-				`${API_URL}?start_at=${start_at}&end_at=${end_at}&key=${API_KEY}`
+				`https://cors-anywhere.herokuapp.com/${API_URL}?start_at=${start_at}&end_at=${end_at}&key=${API_KEY}`
 			);
 
 			if (!response.ok) {

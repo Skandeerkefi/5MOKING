@@ -15,7 +15,6 @@ function HomePage() {
 	const { weeklyLeaderboard } = useLeaderboardStore();
 	const { slotCalls } = useSlotCallStore();
 	const { giveaways } = useGiveawayStore();
-	const [isLive, setIsLive] = useState(false);
 
 	// Display only the first few items on the homepage
 	const topLeaderboard = weeklyLeaderboard.slice(0, 5);
@@ -76,7 +75,6 @@ function HomePage() {
 							</div>
 
 							{/* Stream Status */}
-							
 						</div>
 					</div>
 				</section>

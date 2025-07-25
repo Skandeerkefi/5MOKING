@@ -1,77 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dices, Crown, Gift, Users, LogIn } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export function Navbar() {
 	const location = useLocation();
 	const isMobile = useIsMobile();
 	const [isOpen, setIsOpen] = useState(false);
-	const [streamStatus, setStreamStatus] = useState({
-		isLive: false,
-		isLoading: true,
-		viewerCount: 0,
-		thumbnail: "",
-	});
-
-	useEffect(() => {
-		const checkLiveStatus = async () => {
-			try {
-				// First try the Kick API
-				const response = await fetch(
-					`https://kick.com/api/v2/channels/camneverwins`
-				);
-				const data = await response.json();
-
-				if (data.livestream) {
-					setStreamStatus({
-						isLive: data.livestream.is_live,
-						isLoading: false,
-						viewerCount: data.livestream.viewer_count,
-						thumbnail: data.livestream.thumbnail?.url || "",
-					});
-				} else {
-					// Fallback to checking the page HTML if API fails
-					await checkViaHTML();
-				}
-			} catch (error) {
-				console.error("API check failed, trying HTML method:", error);
-				await checkViaHTML();
-			}
-		};
-
-		const checkViaHTML = async () => {
-			try {
-				const response = await fetch(`https://kick.com/5moking`);
-				const html = await response.text();
-				const isLive = html.includes('"is_live":true');
-				const viewerCountMatch = html.match(/"viewer_count":(\d+)/);
-				const thumbnailMatch = html.match(/"thumbnail":{"url":"(.*?)"/);
-
-				setStreamStatus({
-					isLive,
-					isLoading: false,
-					viewerCount: viewerCountMatch ? parseInt(viewerCountMatch[1]) : 0,
-					thumbnail: thumbnailMatch ? thumbnailMatch[1] : "",
-				});
-			} catch (error) {
-				console.error("Error checking live status via HTML:", error);
-				setStreamStatus((prev) => ({
-					...prev,
-					isLoading: false,
-				}));
-			}
-		};
-
-		// Initial check
-		checkLiveStatus();
-
-		// Set up interval for periodic checks (every 2 minutes)
-		const interval = setInterval(checkLiveStatus, 120000);
-
-		return () => clearInterval(interval);
-	}, []);
 
 	const menuItems = [
 		{ path: "/", name: "Home", icon: <Dices className='w-4 h-4 mr-1' /> },
@@ -91,32 +27,6 @@ export function Navbar() {
 					<Link to='/' className='flex items-center'>
 						<span className='text-xl font-bold gradient-text'>5MOKING</span>
 					</Link>
-
-					{!streamStatus.isLoading && (
-						<a
-							href='https://kick.com/5moking'
-							target='_blank'
-							rel='noopener noreferrer'
-							className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
-								streamStatus.isLive
-									? "bg-red-600/20 text-red-500 hover:bg-red-600/30"
-									: "bg-gray-600/20 text-gray-500 hover:bg-gray-600/30"
-							}`}
-						>
-							<span
-								className={`w-2 h-2 rounded-full ${
-									streamStatus.isLive
-										? "bg-red-500 animate-pulse"
-										: "bg-gray-500"
-								}`}
-							></span>
-							<span>
-								{streamStatus.isLive
-									? `LIVE (${streamStatus.viewerCount.toLocaleString()})`
-									: "OFFLINE"}
-							</span>
-						</a>
-					)}
 				</div>
 
 				{/* Desktop Navigation */}
