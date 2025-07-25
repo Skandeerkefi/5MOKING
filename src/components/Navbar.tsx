@@ -5,59 +5,140 @@ import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export function Navbar() {
-  const location = useLocation();
-  const isMobile = useIsMobile();
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLive, setIsLive] = useState(false);
+	const location = useLocation();
+	const isMobile = useIsMobile();
+	const [isOpen, setIsOpen] = useState(false);
+	const [streamStatus, setStreamStatus] = useState({
+		isLive: false,
+		isLoading: true,
+		viewerCount: 0,
+		thumbnail: "",
+	});
 
-  useEffect(() => {
-    // Mock streaming status - in a real application this would fetch from an API
-    setIsLive(Math.random() > 0.5);
-  }, []);
+	useEffect(() => {
+		const checkLiveStatus = async () => {
+			try {
+				// First try the Kick API
+				const response = await fetch(
+					`https://kick.com/api/v2/channels/5moking`
+				);
+				const data = await response.json();
 
-  const menuItems = [
-    { path: "/", name: "Home", icon: <Dices className="w-4 h-4 mr-1" /> },
-    { path: "/leaderboard", name: "Leaderboard", icon: <Crown className="w-4 h-4 mr-1" /> },
-    // { path: "/slot-calls", name: "Slot Calls", icon: <Users className="w-4 h-4 mr-1" /> },
-    // { path: "/giveaways", name: "Giveaways", icon: <Gift className="w-4 h-4 mr-1" /> },
-  ];
+				if (data.livestream) {
+					setStreamStatus({
+						isLive: data.livestream.is_live,
+						isLoading: false,
+						viewerCount: data.livestream.viewer_count,
+						thumbnail: data.livestream.thumbnail?.url || "",
+					});
+				} else {
+					// Fallback to checking the page HTML if API fails
+					await checkViaHTML();
+				}
+			} catch (error) {
+				console.error("API check failed, trying HTML method:", error);
+				await checkViaHTML();
+			}
+		};
 
-  return (
-    <nav className="sticky top-0 z-50 border-b border-white/10 backdrop-blur-md bg-card/70">
-      <div className="container flex items-center justify-between py-3 mx-auto">
-        <div className="flex items-center gap-2">
-          <Link to="/" className="flex items-center">
-            <span className="text-xl font-bold gradient-text">5MOKING</span>
-          </Link>
-          
-          {isLive && (
-            <div className="flex items-center gap-1 bg-red-600/20 text-red-500 px-2 py-0.5 rounded-full text-xs">
-              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-              <span>LIVE</span>
-            </div>
-          )}
-        </div>
+		const checkViaHTML = async () => {
+			try {
+				const response = await fetch(`https://kick.com/5moking`);
+				const html = await response.text();
+				const isLive = html.includes('"is_live":true');
+				const viewerCountMatch = html.match(/"viewer_count":(\d+)/);
+				const thumbnailMatch = html.match(/"thumbnail":{"url":"(.*?)"/);
 
-        {/* Desktop Navigation */}
-        {!isMobile && (
-          <div className="flex items-center gap-4">
-            <div className="flex items-center">
-              {menuItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`nav-link flex items-center ${
-                    location.pathname === item.path ? "nav-link-active" : ""
-                  }`}
-                >
-                  {item.icon}
-                  {item.name}
-                </Link>
-              ))}
-            </div>
+				setStreamStatus({
+					isLive,
+					isLoading: false,
+					viewerCount: viewerCountMatch ? parseInt(viewerCountMatch[1]) : 0,
+					thumbnail: thumbnailMatch ? thumbnailMatch[1] : "",
+				});
+			} catch (error) {
+				console.error("Error checking live status via HTML:", error);
+				setStreamStatus((prev) => ({
+					...prev,
+					isLoading: false,
+				}));
+			}
+		};
 
-            <div className="flex items-center gap-2">
-              {/* <Button variant="outline" size="sm" asChild>
+		// Initial check
+		checkLiveStatus();
+
+		// Set up interval for periodic checks (every 2 minutes)
+		const interval = setInterval(checkLiveStatus, 120000);
+
+		return () => clearInterval(interval);
+	}, []);
+
+	const menuItems = [
+		{ path: "/", name: "Home", icon: <Dices className='w-4 h-4 mr-1' /> },
+		{
+			path: "/leaderboard",
+			name: "Leaderboard",
+			icon: <Crown className='w-4 h-4 mr-1' />,
+		},
+		// { path: "/slot-calls", name: "Slot Calls", icon: <Users className="w-4 h-4 mr-1" /> },
+		// { path: "/giveaways", name: "Giveaways", icon: <Gift className="w-4 h-4 mr-1" /> },
+	];
+
+	return (
+		<nav className='sticky top-0 z-50 border-b border-white/10 backdrop-blur-md bg-card/70'>
+			<div className='container flex items-center justify-between py-3 mx-auto'>
+				<div className='flex items-center gap-2'>
+					<Link to='/' className='flex items-center'>
+						<span className='text-xl font-bold gradient-text'>5MOKING</span>
+					</Link>
+
+					{!streamStatus.isLoading && (
+						<a
+							href='https://kick.com/5moking'
+							target='_blank'
+							rel='noopener noreferrer'
+							className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
+								streamStatus.isLive
+									? "bg-red-600/20 text-red-500 hover:bg-red-600/30"
+									: "bg-gray-600/20 text-gray-500 hover:bg-gray-600/30"
+							}`}
+						>
+							<span
+								className={`w-2 h-2 rounded-full ${
+									streamStatus.isLive
+										? "bg-red-500 animate-pulse"
+										: "bg-gray-500"
+								}`}
+							></span>
+							<span>
+								{streamStatus.isLive
+									? `LIVE (${streamStatus.viewerCount.toLocaleString()})`
+									: "OFFLINE"}
+							</span>
+						</a>
+					)}
+				</div>
+
+				{/* Desktop Navigation */}
+				{!isMobile && (
+					<div className='flex items-center gap-4'>
+						<div className='flex items-center'>
+							{menuItems.map((item) => (
+								<Link
+									key={item.path}
+									to={item.path}
+									className={`nav-link flex items-center ${
+										location.pathname === item.path ? "nav-link-active" : ""
+									}`}
+								>
+									{item.icon}
+									{item.name}
+								</Link>
+							))}
+						</div>
+
+						<div className='flex items-center gap-2'>
+							{/* <Button variant="outline" size="sm" asChild>
                 <Link to="/login">
                   <LogIn className="w-4 h-4 mr-1" />
                   Login
@@ -66,54 +147,66 @@ export function Navbar() {
               <Button size="sm" asChild>
                 <Link to="/signup">Sign Up</Link>
               </Button> */}
-            </div>
-          </div>
-        )}
+						</div>
+					</div>
+				)}
 
-        {/* Mobile Navigation Button */}
-        {isMobile && (
-          <button
-            className="p-2 rounded-md hover:bg-primary/10"
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            <div className="space-y-1.5">
-              <span className={`block h-0.5 w-6 bg-white transition-transform ${isOpen ? "rotate-45 translate-y-2" : ""}`}></span>
-              <span className={`block h-0.5 w-6 bg-white transition-opacity ${isOpen ? "opacity-0" : ""}`}></span>
-              <span className={`block h-0.5 w-6 bg-white transition-transform ${isOpen ? "-rotate-45 -translate-y-2" : ""}`}></span>
-            </div>
-          </button>
-        )}
-      </div>
+				{/* Mobile Navigation Button */}
+				{isMobile && (
+					<button
+						className='p-2 rounded-md hover:bg-primary/10'
+						onClick={() => setIsOpen(!isOpen)}
+					>
+						<div className='space-y-1.5'>
+							<span
+								className={`block h-0.5 w-6 bg-white transition-transform ${
+									isOpen ? "rotate-45 translate-y-2" : ""
+								}`}
+							></span>
+							<span
+								className={`block h-0.5 w-6 bg-white transition-opacity ${
+									isOpen ? "opacity-0" : ""
+								}`}
+							></span>
+							<span
+								className={`block h-0.5 w-6 bg-white transition-transform ${
+									isOpen ? "-rotate-45 -translate-y-2" : ""
+								}`}
+							></span>
+						</div>
+					</button>
+				)}
+			</div>
 
-      {/* Mobile Navigation Menu */}
-      {isMobile && isOpen && (
-        <div className="container flex flex-col gap-2 py-2 pb-4 mx-auto border-t border-white/10">
-          {menuItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`nav-link flex items-center ${
-                location.pathname === item.path ? "nav-link-active" : ""
-              }`}
-              onClick={() => setIsOpen(false)}
-            >
-              {item.icon}
-              {item.name}
-            </Link>
-          ))}
-          <div className="flex items-center gap-2 mt-2">
-            <Button variant="outline" size="sm" className="flex-1" asChild>
-              <Link to="/login">
-                <LogIn className="w-4 h-4 mr-1" />
-                Login
-              </Link>
-            </Button>
-            <Button size="sm" className="flex-1" asChild>
-              <Link to="/signup">Sign Up</Link>
-            </Button>
-          </div>
-        </div>
-      )}
-    </nav>
-  );
+			{/* Mobile Navigation Menu */}
+			{isMobile && isOpen && (
+				<div className='container flex flex-col gap-2 py-2 pb-4 mx-auto border-t border-white/10'>
+					{menuItems.map((item) => (
+						<Link
+							key={item.path}
+							to={item.path}
+							className={`nav-link flex items-center ${
+								location.pathname === item.path ? "nav-link-active" : ""
+							}`}
+							onClick={() => setIsOpen(false)}
+						>
+							{item.icon}
+							{item.name}
+						</Link>
+					))}
+					<div className='flex items-center gap-2 mt-2'>
+						<Button variant='outline' size='sm' className='flex-1' asChild>
+							<Link to='/login'>
+								<LogIn className='w-4 h-4 mr-1' />
+								Login
+							</Link>
+						</Button>
+						<Button size='sm' className='flex-1' asChild>
+							<Link to='/signup'>Sign Up</Link>
+						</Button>
+					</div>
+				</div>
+			)}
+		</nav>
+	);
 }
