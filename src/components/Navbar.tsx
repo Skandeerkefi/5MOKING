@@ -1,13 +1,40 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dices, Crown, Gift, Users, LogIn } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export function Navbar() {
 	const location = useLocation();
 	const isMobile = useIsMobile();
 	const [isOpen, setIsOpen] = useState(false);
+	const [isLive, setIsLive] = useState(false);
+	const [viewerCount, setViewerCount] = useState<number | null>(null);
+
+	useEffect(() => {
+		const fetchLiveStatus = async () => {
+			try {
+				const res = await fetch("https://kick.com/api/v2/channels/5moking");
+				const data = await res.json();
+
+				if (data.livestream) {
+					setIsLive(true);
+					setViewerCount(data.livestream.viewer_count);
+				} else {
+					setIsLive(false);
+					setViewerCount(null);
+				}
+			} catch (err) {
+				console.error("Error fetching live status", err);
+			}
+		};
+
+		fetchLiveStatus();
+
+		// Optionally poll every 60 seconds
+		const interval = setInterval(fetchLiveStatus, 60000);
+		return () => clearInterval(interval);
+	}, []);
 
 	const menuItems = [
 		{ path: "/", name: "Home", icon: <Dices className='w-4 h-4 mr-1' /> },
@@ -32,6 +59,15 @@ export function Navbar() {
 						/>
 						<span className='text-xl font-bold gradient-text'>5MOKING</span>
 					</Link>
+					{isLive ? (
+						<span className='ml-2 px-2 py-0.5 text-xs bg-red-600 text-white rounded-full animate-pulse'>
+							🔴 LIVE {viewerCount !== null ? `(${viewerCount})` : ""}
+						</span>
+					) : (
+						<span className='ml-2 px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded-full'>
+							Offline
+						</span>
+					)}
 				</div>
 
 				{/* Desktop Navigation */}
