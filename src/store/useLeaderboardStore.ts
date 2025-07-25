@@ -20,8 +20,7 @@ interface LeaderboardState {
 	fetchLeaderboard: (period: LeaderboardPeriod) => Promise<void>;
 }
 
-const API_KEY = "p6AFHUk45kWl00jB5upCA2ldKCrdsTsy";
-const API_URL = "https://services.rainbet.com/v1/external/affiliates";
+const API_URL = "/api/affiliates";
 
 const getDateRange = (
 	period: LeaderboardPeriod
@@ -88,7 +87,7 @@ export const useLeaderboardStore = create<LeaderboardState>((set, get) => ({
 			const { start_at, end_at } = getDateRange(period);
 
 			const response = await fetch(
-				`https://cors-anywhere.herokuapp.com/${API_URL}?start_at=${start_at}&end_at=${end_at}&key=${API_KEY}`
+				`${API_URL}?start_at=${start_at}&end_at=${end_at}`
 			);
 
 			if (!response.ok) {
