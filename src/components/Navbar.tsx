@@ -20,7 +20,7 @@ export function Navbar() {
 			try {
 				// First try the Kick API
 				const response = await fetch(
-					`https://kick.com/api/v2/channels/5moking`
+					`https://kick.com/api/v2/channels/camneverwins`
 				);
 				const data = await response.json();
 
