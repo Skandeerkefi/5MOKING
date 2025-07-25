@@ -19,9 +19,9 @@ export default async function handler(req, res) {
 				.json({ error: data.message || "Rainbet API error" });
 		}
 
-		return res.status(200).json(data);
-	} catch (err) {
-		console.error(err);
-		return res.status(500).json({ error: "Internal server error" });
+		res.status(200).json(data);
+	} catch (error) {
+		console.error("API fetch error:", error);
+		res.status(500).json({ error: "Internal server error" });
 	}
 }
