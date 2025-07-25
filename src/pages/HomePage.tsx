@@ -17,13 +17,69 @@ function HomePage() {
 	const { weeklyLeaderboard } = useLeaderboardStore();
 	const { slotCalls } = useSlotCallStore();
 	const { giveaways } = useGiveawayStore();
-	const [isLive, setIsLive] = useState(false);
-	const [viewerCount, setViewerCount] = useState(0);
+	const [streamStatus, setStreamStatus] = useState({
+		isLive: false,
+		isLoading: true,
+		viewerCount: 0,
+		thumbnail: "",
+	});
 
-	// Simulate stream status check
 	useEffect(() => {
-		setIsLive(Math.random() > 0.5);
-		setViewerCount(Math.floor(Math.random() * 2000) + 500);
+		const checkLiveStatus = async () => {
+			try {
+				// First try the Kick API
+				const response = await fetch(
+					`https://kick.com/api/v2/channels/5moking`
+				);
+				const data = await response.json();
+
+				if (data.livestream) {
+					setStreamStatus({
+						isLive: data.livestream.is_live,
+						isLoading: false,
+						viewerCount: data.livestream.viewer_count,
+						thumbnail: data.livestream.thumbnail?.url || "",
+					});
+				} else {
+					// Fallback to checking the page HTML if API fails
+					await checkViaHTML();
+				}
+			} catch (error) {
+				console.error("API check failed, trying HTML method:", error);
+				await checkViaHTML();
+			}
+		};
+
+		const checkViaHTML = async () => {
+			try {
+				const response = await fetch(`https://kick.com/5moking`);
+				const html = await response.text();
+				const isLive = html.includes('"is_live":true');
+				const viewerCountMatch = html.match(/"viewer_count":(\d+)/);
+				const thumbnailMatch = html.match(/"thumbnail":{"url":"(.*?)"/);
+
+				setStreamStatus({
+					isLive,
+					isLoading: false,
+					viewerCount: viewerCountMatch ? parseInt(viewerCountMatch[1]) : 0,
+					thumbnail: thumbnailMatch ? thumbnailMatch[1] : "",
+				});
+			} catch (error) {
+				console.error("Error checking live status via HTML:", error);
+				setStreamStatus((prev) => ({
+					...prev,
+					isLoading: false,
+				}));
+			}
+		};
+
+		// Initial check
+		checkLiveStatus();
+
+		// Set up interval for periodic checks (every 2 minutes)
+		const interval = setInterval(checkLiveStatus, 120000);
+
+		return () => clearInterval(interval);
 	}, []);
 
 	// Display only the first few items on the homepage
@@ -85,30 +141,35 @@ function HomePage() {
 							</div>
 
 							{/* Stream Status */}
-							<div className='inline-block px-4 py-2 mt-8 border rounded-full border-white/10 bg-card/50'>
-								<div className='flex items-center gap-2'>
-									<div
-										className={`w-3 h-3 rounded-full ${
-											isLive ? "bg-red-500 animate-pulse" : "bg-gray-500"
-										}`}
-									></div>
-									<span className='font-medium'>
-										{isLive ? (
-											<>
-												LIVE NOW{" "}
-												<span className='text-muted-foreground'>
-													with {viewerCount.toLocaleString()} viewers
-												</span>
-											</>
-										) : (
-											<>
-												<span className='text-muted-foreground'>OFFLINE</span>{" "}
-												Check schedule for next stream
-											</>
-										)}
-									</span>
+							{!streamStatus.isLoading && (
+								<div className='inline-block px-4 py-2 mt-8 border rounded-full border-white/10 bg-card/50'>
+									<div className='flex items-center gap-2'>
+										<div
+											className={`w-3 h-3 rounded-full ${
+												streamStatus.isLive
+													? "bg-red-500 animate-pulse"
+													: "bg-gray-500"
+											}`}
+										></div>
+										<span className='font-medium'>
+											{streamStatus.isLive ? (
+												<>
+													LIVE NOW{" "}
+													<span className='text-muted-foreground'>
+														with {streamStatus.viewerCount.toLocaleString()}{" "}
+														viewers
+													</span>
+												</>
+											) : (
+												<>
+													<span className='text-muted-foreground'>OFFLINE</span>{" "}
+													Check schedule for next stream
+												</>
+											)}
+										</span>
+									</div>
 								</div>
-							</div>
+							)}
 						</div>
 					</div>
 				</section>
@@ -131,7 +192,7 @@ function HomePage() {
 					<LeaderboardTable period='weekly' data={topLeaderboard} />
 				</section>
 
-				{/* Features Section */}
+				{/* Features Section
 				<section className='py-12 md:py-16 bg-primary/5 border-y border-white/10'>
 					<div className='container'>
 						<h2 className='mb-12 text-2xl font-bold text-center'>
@@ -156,57 +217,59 @@ function HomePage() {
 							/>
 						</div>
 					</div>
-				</section>
-
-				{/* Slot Calls Preview
-				<section className='container py-12 md:py-16'>
-					<div className='flex items-center justify-between mb-8'>
-						<div className='flex items-center gap-2'>
-							<Dices className='w-6 h-6 text-secondary' />
-							<h2 className='text-2xl font-bold'>Recent Slot Calls</h2>
-						</div>
-
-						<Button variant='outline' size='sm' asChild>
-							<Link to='/slot-calls' className='flex items-center gap-1'>
-								View All Slot Calls <ArrowRight className='w-4 h-4' />
-							</Link>
-						</Button>
-					</div>
-
-					<div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
-						{recentSlotCalls.map((slotCall) => (
-							<SlotCallCard
-								key={slotCall.id}
-								id={slotCall.id}
-								slotName={slotCall.slotName}
-								requester={slotCall.requester}
-								betAmount={slotCall.betAmount}
-								timestamp={slotCall.timestamp}
-								status={slotCall.status}
-							/>
-						))}
-					</div>
 				</section> */}
 
-				{/* Active Giveaways Preview
-				<section className='py-12 md:py-16 bg-primary/5 border-y border-white/10'>
-					<div className='container'>
+				{/* Slot Calls Preview
+				{recentSlotCalls.length > 0 && (
+					<section className='container py-12 md:py-16'>
 						<div className='flex items-center justify-between mb-8'>
 							<div className='flex items-center gap-2'>
-								<Gift className='w-6 h-6 text-secondary' />
-								<h2 className='text-2xl font-bold'>Active Giveaways</h2>
+								<Dices className='w-6 h-6 text-secondary' />
+								<h2 className='text-2xl font-bold'>Recent Slot Calls</h2>
 							</div>
 
 							<Button variant='outline' size='sm' asChild>
-								<Link to='/giveaways' className='flex items-center gap-1'>
-									View All Giveaways <ArrowRight className='w-4 h-4' />
+								<Link to='/slot-calls' className='flex items-center gap-1'>
+									View All Slot Calls <ArrowRight className='w-4 h-4' />
 								</Link>
 							</Button>
 						</div>
 
-						<div className='grid grid-cols-1 gap-8 md:grid-cols-2'>
-							{activeGiveaways.length > 0 ? (
-								activeGiveaways.map((giveaway) => (
+						<div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
+							{recentSlotCalls.map((slotCall) => (
+								<SlotCallCard
+									key={slotCall.id}
+									id={slotCall.id}
+									slotName={slotCall.slotName}
+									requester={slotCall.requester}
+									betAmount={slotCall.betAmount}
+									timestamp={slotCall.timestamp}
+									status={slotCall.status}
+								/>
+							))}
+						</div>
+					</section>
+				)} */}
+
+				{/* Active Giveaways Preview
+				{activeGiveaways.length > 0 && (
+					<section className='py-12 md:py-16 bg-primary/5 border-y border-white/10'>
+						<div className='container'>
+							<div className='flex items-center justify-between mb-8'>
+								<div className='flex items-center gap-2'>
+									<Gift className='w-6 h-6 text-secondary' />
+									<h2 className='text-2xl font-bold'>Active Giveaways</h2>
+								</div>
+
+								<Button variant='outline' size='sm' asChild>
+									<Link to='/giveaways' className='flex items-center gap-1'>
+										View All Giveaways <ArrowRight className='w-4 h-4' />
+									</Link>
+								</Button>
+							</div>
+
+							<div className='grid grid-cols-1 gap-8 md:grid-cols-2'>
+								{activeGiveaways.map((giveaway) => (
 									<GiveawayCard
 										key={giveaway.id}
 										id={giveaway.id}
@@ -218,22 +281,11 @@ function HomePage() {
 										status={giveaway.status}
 										isEntered={giveaway.isEntered}
 									/>
-								))
-							) : (
-								<div className='py-8 text-center col-span-full'>
-									<Clock className='w-12 h-12 mx-auto mb-4 text-muted-foreground' />
-									<h3 className='mb-2 text-xl font-bold'>
-										No Active Giveaways
-									</h3>
-									<p className='text-muted-foreground'>
-										Check back soon for upcoming giveaways or follow 5MOKING's
-										stream to be notified.
-									</p>
-								</div>
-							)}
+								))}
+							</div>
 						</div>
-					</div>
-				</section> */}
+					</section>
+				)} */}
 
 				{/* CTA Section
 				<section className='py-16 md:py-24'>
