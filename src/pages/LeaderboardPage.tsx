@@ -5,6 +5,7 @@ import { LeaderboardTable } from "@/components/LeaderboardTable";
 import { useLeaderboardStore } from "@/store/useLeaderboardStore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Crown, Info, Loader2, Trophy, Award, Medal } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
 	Tooltip,
 	TooltipContent,
@@ -209,19 +210,30 @@ function RewardCard({
 	icon,
 }: RewardCardProps) {
 	return (
-		<div
-			className={`glass-card rounded-lg overflow-hidden h-full flex flex-col`}
-		>
+		<div className='flex flex-col h-full overflow-hidden rounded-lg glass-card'>
 			<div className={`h-2 bg-gradient-to-r ${backgroundColor}`} />
 			<div className='flex flex-col items-center flex-grow p-6 text-center'>
 				<div className='mb-4'>{icon}</div>
 				<h3 className='mb-2 text-xl font-bold'>{position}</h3>
+
 				{player ? (
 					<>
 						<p className='font-medium'>{player.username}</p>
 						<p className='text-muted-foreground'>
 							${player.wager.toLocaleString()}
 						</p>
+
+						{/* Claim Button */}
+						<a
+							href='https://discord.gg/3eVUWD4BtF'
+							target='_blank'
+							rel='noreferrer'
+							className='w-full mt-4'
+						>
+							<Button className='w-full' variant='secondary'>
+								Claim Prize
+							</Button>
+						</a>
 					</>
 				) : (
 					<p className='text-muted-foreground'>{reward}</p>
