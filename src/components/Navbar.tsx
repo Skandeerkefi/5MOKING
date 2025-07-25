@@ -24,7 +24,12 @@ export function Navbar() {
 		<nav className='sticky top-0 z-50 border-b border-white/10 backdrop-blur-md bg-card/70'>
 			<div className='container flex items-center justify-between py-3 mx-auto'>
 				<div className='flex items-center gap-2'>
-					<Link to='/' className='flex items-center'>
+					<Link to='/' className='flex items-center gap-2'>
+						<img
+							src='https://files.kick.com/images/user/48867484/profile_image/conversion/ae281c89-eae8-44d5-ab0c-6bb20b93ee6d-fullsize.webp'
+							alt='5MOKING Logo'
+							className='object-cover w-10 h-10 border rounded-full shadow-sm border-white/20'
+						/>
 						<span className='text-xl font-bold gradient-text'>5MOKING</span>
 					</Link>
 				</div>
