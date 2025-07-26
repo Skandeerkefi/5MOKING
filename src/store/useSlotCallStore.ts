@@ -1,162 +1,161 @@
 import { create } from "zustand";
-import { useToast } from "@/hooks/use-toast";
+import { useAuthStore } from "./useAuthStore";
 
 export type SlotCallStatus = "pending" | "accepted" | "rejected";
 
 export interface SlotCall {
-  id: string;
-  slotName: string;
-  requester: string;
-  betAmount: number;
-  timestamp: string;
-  status: SlotCallStatus;
+	id: string;
+	slotName: string;
+	requester: string;
+	betAmount: number;
+	timestamp: string;
+	status: SlotCallStatus;
 }
 
 interface SlotCallState {
-  slotCalls: SlotCall[];
-  isSubmitting: boolean;
-  addSlotCall: (slotName: string, betAmount: number) => Promise<void>;
-  acceptSlotCall: (id: string) => Promise<void>;
-  rejectSlotCall: (id: string) => Promise<void>;
-  fetchSlotCalls: () => Promise<void>;
+	slotCalls: SlotCall[];
+	isSubmitting: boolean;
+	addSlotCall: (
+		slotName: string,
+		betAmount: number
+	) => Promise<{ success: boolean; error?: string }>;
+	updateSlotStatus: (
+		id: string,
+		status: SlotCallStatus
+	) => Promise<{ success: boolean; error?: string }>;
+	fetchSlotCalls: () => Promise<void>;
 }
 
-// Mock data for demonstration
-const generateMockSlotCalls = (): SlotCall[] => {
-  const slotNames = [
-    "Gates of Olympus",
-    "Sweet Bonanza",
-    "Sugar Rush",
-    "Fruit Party",
-    "Wild West Gold",
-    "Starlight Princess",
-    "Dog House",
-    "Big Bass Bonanza"
-  ];
-  
-  const statuses: SlotCallStatus[] = ["pending", "accepted", "rejected"];
-  const requesters = ["Player123", "GamblingKing", "SlotLover", "BigWinner", "LuckyGuy"];
-  
-  const calls: SlotCall[] = [];
-  
-  for (let i = 1; i <= 10; i++) {
-    const date = new Date();
-    date.setHours(date.getHours() - Math.floor(Math.random() * 48));
-    
-    calls.push({
-      id: `call-${i}`,
-      slotName: slotNames[Math.floor(Math.random() * slotNames.length)],
-      requester: requesters[Math.floor(Math.random() * requesters.length)],
-      betAmount: (Math.floor(Math.random() * 20) + 1) * 50,
-      timestamp: date.toLocaleString(),
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-    });
-  }
-  
-  return calls;
-};
-
 export const useSlotCallStore = create<SlotCallState>((set, get) => ({
-  slotCalls: generateMockSlotCalls(),
-  isSubmitting: false,
-  
-  addSlotCall: async (slotName, betAmount) => {
-    const { toast } = useToast();
-    
-    set({ isSubmitting: true });
-    
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      const newSlotCall: SlotCall = {
-        id: `call-${Date.now()}`,
-        slotName,
-        requester: "You",
-        betAmount,
-        timestamp: new Date().toLocaleString(),
-        status: "pending",
-      };
-      
-      set((state) => ({
-        slotCalls: [newSlotCall, ...state.slotCalls],
-        isSubmitting: false,
-      }));
-      
-      toast({
-        title: "Slot Call Submitted",
-        description: "Your slot call has been submitted for review.",
-      });
-    } catch (error) {
-      set({ isSubmitting: false });
-      
-      toast({
-        title: "Error",
-        description: "Failed to submit your slot call. Please try again.",
-        variant: "destructive",
-      });
-    }
-  },
-  
-  acceptSlotCall: async (id) => {
-    const { toast } = useToast();
-    
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      
-      set((state) => ({
-        slotCalls: state.slotCalls.map((call) =>
-          call.id === id ? { ...call, status: "accepted" } : call
-        ),
-      }));
-      
-      toast({
-        title: "Slot Call Accepted",
-        description: "The slot call has been accepted.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to accept the slot call. Please try again.",
-        variant: "destructive",
-      });
-    }
-  },
-  
-  rejectSlotCall: async (id) => {
-    const { toast } = useToast();
-    
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      
-      set((state) => ({
-        slotCalls: state.slotCalls.map((call) =>
-          call.id === id ? { ...call, status: "rejected" } : call
-        ),
-      }));
-      
-      toast({
-        title: "Slot Call Rejected",
-        description: "The slot call has been rejected.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to reject the slot call. Please try again.",
-        variant: "destructive",
-      });
-    }
-  },
-  
-  fetchSlotCalls: async () => {
-    // In a real application, this would make an API call
-    // For now, we'll just regenerate the mock data
-    
-    // Simulating API call delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    
-    set({ slotCalls: generateMockSlotCalls() });
-  },
+	slotCalls: [],
+	isSubmitting: false,
+
+	addSlotCall: async (slotName, betAmount) => {
+		const token = useAuthStore.getState().token;
+		if (!token) return { success: false, error: "Not authenticated" };
+
+		set({ isSubmitting: true });
+		try {
+			const res = await fetch("http://localhost:3000/api/slot-calls", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify({ name: slotName, betAmount }),
+				credentials: "include",
+			});
+
+			if (!res.ok) {
+				const data = await res.json();
+				throw new Error(data.message || "Failed to add slot call");
+			}
+
+			const newCall = await res.json();
+
+			set((state) => ({
+				slotCalls: [
+					{
+						id: newCall._id,
+						slotName: newCall.name,
+						requester: useAuthStore.getState().user?.kickUsername || "You",
+						betAmount: newCall.betAmount,
+						timestamp: new Date(newCall.createdAt).toLocaleString(),
+						status: newCall.status,
+					},
+					...state.slotCalls,
+				],
+				isSubmitting: false,
+			}));
+
+			return { success: true };
+		} catch (error: any) {
+			set({ isSubmitting: false });
+			return { success: false, error: error.message };
+		}
+	},
+
+	updateSlotStatus: async (id, status) => {
+		const token = useAuthStore.getState().token;
+		if (!token) return { success: false, error: "Not authenticated" };
+
+		try {
+			const res = await fetch(
+				`http://localhost:3000/api/slot-calls/${id}/status`,
+				{
+					method: "POST", // Changed from PATCH to POST
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${token}`,
+					},
+					body: JSON.stringify({ status }),
+					credentials: "include",
+				}
+			);
+
+			if (!res.ok) {
+				const data = await res.json();
+				throw new Error(
+					data.message || `Failed to update slot call status to ${status}`
+				);
+			}
+
+			const updated = (await res.json()).slotCall;
+
+			set((state) => ({
+				slotCalls: state.slotCalls.map((call) =>
+					call.id === id
+						? {
+								...call,
+								status: updated.status,
+						  }
+						: call
+				),
+			}));
+
+			return { success: true };
+		} catch (error: any) {
+			return { success: false, error: error.message };
+		}
+	},
+
+	fetchSlotCalls: async () => {
+		const token = useAuthStore.getState().token;
+		const userRole = useAuthStore.getState().user?.role;
+		if (!token) return;
+
+		const url =
+			userRole === "admin"
+				? "http://localhost:3000/api/slot-calls"
+				: "http://localhost:3000/api/slot-calls/my";
+
+		try {
+			const res = await fetch(url, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+				credentials: "include",
+			});
+
+			if (!res.ok) throw new Error("Failed to fetch slot calls");
+
+			const data = await res.json();
+
+			const mapped = data.map((item: any) => ({
+				id: item._id,
+				slotName: item.name,
+				requester:
+					item.user?.kickUsername ||
+					useAuthStore.getState().user?.kickUsername ||
+					"You",
+				betAmount: item.betAmount,
+				timestamp: new Date(item.createdAt).toLocaleString(),
+				status: item.status,
+			}));
+
+			set({ slotCalls: mapped });
+		} catch (error) {
+			console.error("Error fetching slot calls:", error);
+		}
+	},
 }));

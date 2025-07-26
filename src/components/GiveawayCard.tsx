@@ -30,35 +30,35 @@ export function GiveawayCard({
   const participationPercentage = Math.min(100, Math.floor((participants / maxParticipants) * 100));
   
   return (
-    <div className="glass-card rounded-lg overflow-hidden">
+    <div className="overflow-hidden rounded-lg glass-card">
       <div className="h-3 bg-gradient-to-r from-primary to-secondary" />
       
       <div className="p-5">
         <div className="flex items-start justify-between">
-          <h3 className="font-bold text-lg">{title}</h3>
+          <h3 className="text-lg font-bold">{title}</h3>
           <StatusPill status={status} />
         </div>
         
-        <div className="mt-4 flex items-center gap-2">
-          <Gift className="h-5 w-5 text-secondary" />
+        <div className="flex items-center gap-2 mt-4">
+          <Gift className="w-5 h-5 text-secondary" />
           <span className="text-lg font-semibold">{prize}</span>
         </div>
         
         <div className="mt-4 space-y-3">
           <div className="flex justify-between text-sm">
             <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Users className="h-4 w-4" />
+              <Users className="w-4 h-4" />
               <span>{participants} participants</span>
             </div>
             <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Clock className="h-4 w-4" />
+              <Clock className="w-4 h-4" />
               <span>{endTime}</span>
             </div>
           </div>
           
           <Progress value={participationPercentage} className="h-2" />
           
-          <div className="text-xs text-muted-foreground text-right">
+          <div className="text-xs text-right text-muted-foreground">
             {participants} / {maxParticipants} entries
           </div>
         </div>

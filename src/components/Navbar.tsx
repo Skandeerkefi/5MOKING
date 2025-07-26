@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Dices, Crown, Gift, Users, LogIn } from "lucide-react";
+import { Dices, Crown, Gift, Users, LogIn, User, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export function Navbar() {
 	const location = useLocation();
@@ -10,6 +11,8 @@ export function Navbar() {
 	const [isOpen, setIsOpen] = useState(false);
 	const [isLive, setIsLive] = useState(false);
 	const [viewerCount, setViewerCount] = useState<number | null>(null);
+
+	const { user, logout } = useAuthStore();
 
 	useEffect(() => {
 		const fetchLiveStatus = async () => {
@@ -30,8 +33,6 @@ export function Navbar() {
 		};
 
 		fetchLiveStatus();
-
-		// Optionally poll every 60 seconds
 		const interval = setInterval(fetchLiveStatus, 60000);
 		return () => clearInterval(interval);
 	}, []);
@@ -43,13 +44,22 @@ export function Navbar() {
 			name: "Leaderboard",
 			icon: <Crown className='w-4 h-4 mr-1' />,
 		},
-		// { path: "/slot-calls", name: "Slot Calls", icon: <Users className="w-4 h-4 mr-1" /> },
-		// { path: "/giveaways", name: "Giveaways", icon: <Gift className="w-4 h-4 mr-1" /> },
+		{
+			path: "/slot-calls",
+			name: "Slot Calls",
+			icon: <Users className='w-4 h-4 mr-1' />,
+		},
+		{
+			path: "/giveaways",
+			name: "Giveaways",
+			icon: <Gift className='w-4 h-4 mr-1' />,
+		},
 	];
 
 	return (
 		<nav className='sticky top-0 z-50 border-b border-white/10 backdrop-blur-md bg-card/70'>
 			<div className='container flex items-center justify-between py-3 mx-auto'>
+				{/* Logo + Live Status */}
 				<div className='flex items-center gap-2'>
 					<Link to='/' className='flex items-center gap-2'>
 						<img
@@ -73,6 +83,7 @@ export function Navbar() {
 				{/* Desktop Navigation */}
 				{!isMobile && (
 					<div className='flex items-center gap-4'>
+						{/* Menu Links */}
 						<div className='flex items-center'>
 							{menuItems.map((item) => (
 								<Link
@@ -88,42 +99,61 @@ export function Navbar() {
 							))}
 						</div>
 
+						{/* Authentication Buttons */}
 						<div className='flex items-center gap-2'>
-							{/* <Button variant="outline" size="sm" asChild>
-                <Link to="/login">
-                  <LogIn className="w-4 h-4 mr-1" />
-                  Login
-                </Link>
-              </Button>
-              <Button size="sm" asChild>
-                <Link to="/signup">Sign Up</Link>
-              </Button> */}
+							{user ? (
+								<>
+									<Button variant='ghost' size='sm' asChild>
+										<Link to='/' className='flex items-center gap-1'>
+											<User className='w-4 h-4' />
+											<span>{user.username}</span>
+										</Link>
+									</Button>
+									<Button variant='outline' size='sm' onClick={logout}>
+										<LogOut className='w-4 h-4 mr-1' />
+										Logout
+									</Button>
+								</>
+							) : (
+								<>
+									<Button variant='outline' size='sm' asChild>
+										<Link to='/login' className='flex items-center'>
+											<LogIn className='w-4 h-4 mr-1' />
+											Login
+										</Link>
+									</Button>
+									<Button size='sm' asChild>
+										<Link to='/signup'>Sign Up</Link>
+									</Button>
+								</>
+							)}
 						</div>
 					</div>
 				)}
 
-				{/* Mobile Navigation Button */}
+				{/* Mobile Navigation Toggle */}
 				{isMobile && (
 					<button
 						className='p-2 rounded-md hover:bg-primary/10'
 						onClick={() => setIsOpen(!isOpen)}
+						aria-label='Toggle menu'
 					>
 						<div className='space-y-1.5'>
 							<span
 								className={`block h-0.5 w-6 bg-white transition-transform ${
 									isOpen ? "rotate-45 translate-y-2" : ""
 								}`}
-							></span>
+							/>
 							<span
 								className={`block h-0.5 w-6 bg-white transition-opacity ${
 									isOpen ? "opacity-0" : ""
 								}`}
-							></span>
+							/>
 							<span
 								className={`block h-0.5 w-6 bg-white transition-transform ${
 									isOpen ? "-rotate-45 -translate-y-2" : ""
 								}`}
-							></span>
+							/>
 						</div>
 					</button>
 				)}
@@ -145,16 +175,51 @@ export function Navbar() {
 							{item.name}
 						</Link>
 					))}
-					<div className='flex items-center gap-2 mt-2'>
-						<Button variant='outline' size='sm' className='flex-1' asChild>
-							<Link to='/login'>
-								<LogIn className='w-4 h-4 mr-1' />
-								Login
-							</Link>
-						</Button>
-						<Button size='sm' className='flex-1' asChild>
-							<Link to='/signup'>Sign Up</Link>
-						</Button>
+					<div className='flex flex-col gap-2 mt-2'>
+						{user ? (
+							<>
+								<Button variant='ghost' size='sm' className='w-full' asChild>
+									<Link
+										to='/profile'
+										onClick={() => setIsOpen(false)}
+										className='flex items-center'
+									>
+										<User className='w-4 h-4 mr-1' />
+										{user.username}
+									</Link>
+								</Button>
+								<Button
+									variant='outline'
+									size='sm'
+									className='w-full'
+									onClick={() => {
+										logout();
+										setIsOpen(false);
+									}}
+								>
+									<LogOut className='w-4 h-4 mr-1' />
+									Logout
+								</Button>
+							</>
+						) : (
+							<>
+								<Button variant='outline' size='sm' className='w-full' asChild>
+									<Link
+										to='/login'
+										onClick={() => setIsOpen(false)}
+										className='flex items-center'
+									>
+										<LogIn className='w-4 h-4 mr-1' />
+										Login
+									</Link>
+								</Button>
+								<Button size='sm' className='w-full' asChild>
+									<Link to='/signup' onClick={() => setIsOpen(false)}>
+										Sign Up
+									</Link>
+								</Button>
+							</>
+						)}
 					</div>
 				</div>
 			)}

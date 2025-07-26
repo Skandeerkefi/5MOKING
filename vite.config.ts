@@ -14,9 +14,11 @@ export default defineConfig({
 		proxy: {
 			// Proxy any request starting with /api to your backend server
 			"/api": {
-				target: "http://localhost:4000", // your backend server port
-				changeOrigin: true,
+				target: "http://localhost:3000", // your backend server port
+
 				rewrite: (path) => path.replace(/^\/api/, ""),
+				changeOrigin: true,
+				secure: false,
 			},
 		},
 	},

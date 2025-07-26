@@ -1,127 +1,112 @@
 import { create } from "zustand";
-import { useToast } from "@/hooks/use-toast";
+import api from "@/lib/api";
+import { useAuthStore } from "./useAuthStore";
 
 export type GiveawayStatus = "active" | "completed" | "upcoming";
 
 export interface Giveaway {
-  id: string;
-  title: string;
-  prize: string;
-  endTime: string;
-  participants: number;
-  maxParticipants: number;
-  status: GiveawayStatus;
-  isEntered: boolean;
+	_id: string;
+	title: string;
+	endTime: string;
+	participants: any[];
+	totalParticipants: number;
+	totalEntries: number;
+	status: GiveawayStatus;
+	winner?: any;
+	isEntered: boolean;
 }
 
 interface GiveawayState {
-  giveaways: Giveaway[];
-  fetchGiveaways: () => Promise<void>;
-  enterGiveaway: (id: string) => Promise<void>;
+	giveaways: Giveaway[];
+	fetchGiveaways: () => Promise<void>;
+	enterGiveaway: (id: string, toast: any) => Promise<void>;
+	createGiveaway: (title: string, endTime: string, toast: any) => Promise<void>;
+	drawWinner: (id: string, toast: any) => Promise<void>;
 }
 
-// Mock data for demonstration
-const generateMockGiveaways = (): Giveaway[] => {
-  const prizes = [
-    "$500 Cash",
-    "$1,000 Rainbet Credits",
-    "Gaming Headphones",
-    "Gaming Chair",
-    "iPhone 15 Pro",
-    "PlayStation 5",
-    "Xbox Series X",
-    "Nvidia RTX 4080",
-    "$250 Amazon Gift Card"
-  ];
-  
-  const statuses: GiveawayStatus[] = ["active", "completed", "upcoming"];
-  const titles = [
-    "Weekly Cash Drop",
-    "Monthly Mega Giveaway",
-    "Subscriber Special",
-    "1000 Followers Celebration",
-    "Birthday Giveaway",
-    "Holiday Special",
-    "New Game Launch"
-  ];
-  
-  const giveaways: Giveaway[] = [];
-  
-  for (let i = 1; i <= 6; i++) {
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
-    const participants = Math.floor(Math.random() * 80) + 20;
-    const maxParticipants = 100;
-    
-    // Generate end time
-    let endTime = "";
-    if (status === "active") {
-      const hours = Math.floor(Math.random() * 24) + 1;
-      endTime = `Ends in ${hours} hours`;
-    } else if (status === "completed") {
-      const days = Math.floor(Math.random() * 10) + 1;
-      endTime = `Ended ${days} days ago`;
-    } else {
-      const days = Math.floor(Math.random() * 7) + 1;
-      endTime = `Starts in ${days} days`;
-    }
-    
-    giveaways.push({
-      id: `giveaway-${i}`,
-      title: titles[Math.floor(Math.random() * titles.length)],
-      prize: prizes[Math.floor(Math.random() * prizes.length)],
-      endTime,
-      participants,
-      maxParticipants,
-      status,
-      isEntered: Math.random() > 0.7,
-    });
-  }
-  
-  return giveaways;
-};
+export const useGiveawayStore = create<GiveawayState>((set, get) => ({
+	giveaways: [],
 
-export const useGiveawayStore = create<GiveawayState>((set) => ({
-  giveaways: generateMockGiveaways(),
-  
-  fetchGiveaways: async () => {
-    // In a real application, this would make an API call
-    // For now, we'll just regenerate the mock data
-    
-    // Simulating API call delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    
-    set({ giveaways: generateMockGiveaways() });
-  },
-  
-  enterGiveaway: async (id: string) => {
-    const { toast } = useToast();
-    
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      set((state) => ({
-        giveaways: state.giveaways.map((giveaway) =>
-          giveaway.id === id
-            ? {
-                ...giveaway,
-                isEntered: true,
-                participants: giveaway.participants + 1,
-              }
-            : giveaway
-        ),
-      }));
-      
-      toast({
-        title: "Successfully Entered",
-        description: "You have been entered into the giveaway!",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to enter giveaway. Please try again.",
-        variant: "destructive",
-      });
-    }
-  },
+	fetchGiveaways: async () => {
+		const token = useAuthStore.getState().token;
+		try {
+			const res = await api.get("/api/gws", {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			const userId = useAuthStore.getState().user?.id;
+			const enriched = res.data.map((gws: any) => ({
+				...gws,
+				isEntered: gws.participants.some(
+					(p: any) => p._id === userId || p === userId
+				),
+				status: gws.state === "complete" ? "completed" : gws.state,
+			}));
+			set({ giveaways: enriched });
+		} catch (err) {
+			console.error("Failed to fetch giveaways", err);
+		}
+	},
+
+	enterGiveaway: async (id, toast) => {
+		const token = useAuthStore.getState().token;
+		try {
+			await api.post(
+				`/api/gws/${id}/join`,
+				{},
+				{
+					headers: { Authorization: `Bearer ${token}` },
+				}
+			);
+			await get().fetchGiveaways();
+			toast({ title: "Entered successfully" });
+		} catch {
+			toast({
+				title: "Error",
+				description: "You already joined or something went wrong",
+				variant: "destructive",
+			});
+		}
+	},
+
+	createGiveaway: async (title, endTime, toast) => {
+		const token = useAuthStore.getState().token;
+		try {
+			await api.post(
+				"/api/gws",
+				{ title, endTime },
+				{
+					headers: { Authorization: `Bearer ${token}` },
+				}
+			);
+			await get().fetchGiveaways();
+			toast({ title: "Giveaway created successfully" });
+		} catch {
+			toast({
+				title: "Error",
+				description: "Failed to create giveaway",
+				variant: "destructive",
+			});
+		}
+	},
+
+	drawWinner: async (id, toast) => {
+		const token = useAuthStore.getState().token;
+		try {
+			await api.post(
+				`/api/gws/${id}/draw`,
+				{},
+				{
+					headers: { Authorization: `Bearer ${token}` },
+				}
+			);
+			await get().fetchGiveaways();
+			toast({ title: "Winner drawn successfully" });
+		} catch {
+			toast({
+				title: "Error",
+				description: "Failed to draw winner",
+				variant: "destructive",
+			});
+		}
+	},
 }));
