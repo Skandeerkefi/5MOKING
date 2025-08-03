@@ -26,7 +26,7 @@ interface LeaderboardTableProps {
 function maskUsername(username: string): string {
 	if (username.length <= 4) return username;
 	const first = username.slice(0, 2);
-	const last = username.slice(0);
+	const last = username.slice(-1);
 	return `${first}***${last}`;
 }
 
