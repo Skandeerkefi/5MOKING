@@ -44,16 +44,16 @@ export function Navbar() {
 			name: "Leaderboard",
 			icon: <Crown className='w-4 h-4 mr-1' />,
 		},
-		{
-			path: "/slot-calls",
-			name: "Slot Calls",
-			icon: <Users className='w-4 h-4 mr-1' />,
-		},
-		{
-			path: "/giveaways",
-			name: "Giveaways",
-			icon: <Gift className='w-4 h-4 mr-1' />,
-		},
+		// {
+		// 	path: "/slot-calls",
+		// 	name: "Slot Calls",
+		// 	icon: <Users className='w-4 h-4 mr-1' />,
+		// },
+		// {
+		// 	path: "/giveaways",
+		// 	name: "Giveaways",
+		// 	icon: <Gift className='w-4 h-4 mr-1' />,
+		// },
 	];
 
 	return (
@@ -100,7 +100,7 @@ export function Navbar() {
 						</div>
 
 						{/* Authentication Buttons */}
-						<div className='flex items-center gap-2'>
+						{/* <div className='flex items-center gap-2'>
 							{user ? (
 								<>
 									<Button variant='ghost' size='sm' asChild>
@@ -127,7 +127,7 @@ export function Navbar() {
 									</Button>
 								</>
 							)}
-						</div>
+						</div> */}
 					</div>
 				)}
 
