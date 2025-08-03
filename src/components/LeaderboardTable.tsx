@@ -22,11 +22,16 @@ interface LeaderboardTableProps {
 	period: LeaderboardPeriod;
 	data: LeaderboardPlayer[];
 }
-
+function maskUsername(username: string): string {
+	if (username.length <= 4) return username; // don't mask very short usernames
+	const first = username.slice(0, 2);
+	const last = username.slice(-2);
+	return `${first}***${last}`;
+}
 // Define prize structure
 const PRIZES = {
 	weekly: {
-		1: 50,
+		1: 125,
 		2: 25,
 		3: 10,
 	},
@@ -54,7 +59,7 @@ export function LeaderboardTable({ period, data }: LeaderboardTableProps) {
 						const prize = PRIZES[period][player.rank as 1 | 2 | 3] || 0;
 						return (
 							<TableRow
-								key={player.username}
+								key={maskUsername(player.username)}
 								className={player.isFeatured ? "bg-primary/5" : ""}
 							>
 								<TableCell className='font-medium text-center'>
@@ -75,7 +80,7 @@ export function LeaderboardTable({ period, data }: LeaderboardTableProps) {
 									)}
 								</TableCell>
 								<TableCell className='flex items-center gap-2 font-medium'>
-									{player.username}
+									{maskUsername(player.username)}
 									{player.isFeatured && (
 										<Badge
 											variant='outline'
