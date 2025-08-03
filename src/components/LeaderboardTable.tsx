@@ -22,13 +22,14 @@ interface LeaderboardTableProps {
 	period: LeaderboardPeriod;
 	data: LeaderboardPlayer[];
 }
+
 function maskUsername(username: string): string {
-	if (username.length <= 4) return username; // don't mask very short usernames
+	if (username.length <= 4) return username;
 	const first = username.slice(0, 2);
-	const last = username.slice(-2);
+	const last = username.slice(0);
 	return `${first}***${last}`;
 }
-// Define prize structure
+
 const PRIZES = {
 	weekly: {
 		1: 125,

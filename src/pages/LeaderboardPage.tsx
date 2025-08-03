@@ -18,33 +18,21 @@ import {
 } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-// Utility: Get leaderboard period end date
-function getPeriodEndDate(period: LeaderboardPeriod): Date {
+// Calculate cooldown until end of current month (for both weekly & monthly)
+function getCooldownEndDate(): Date {
 	const now = new Date();
-	if (period === "weekly") {
-		// Calculate next Sunday 23:59:59.999 as end of week
-		const end = new Date(now);
-		const day = now.getDay(); // 0=Sun, 1=Mon ... 6=Sat
-		const daysUntilSunday = (7 - day) % 7; // days to next Sunday (0 if today is Sunday)
-		end.setDate(now.getDate() + daysUntilSunday);
-		end.setHours(23, 59, 59, 999);
-		return end;
-	} else {
-		// Monthly: last day of current month 23:59:59.999
-		const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-		end.setHours(23, 59, 59, 999);
-		return end;
-	}
+	const end = new Date(now.getFullYear(), now.getMonth() + 1, 0); // last day of month
+	end.setHours(23, 59, 59, 999);
+	return end;
 }
 
-// Hook: Countdown timer string for period
-function useCountdown(period: LeaderboardPeriod) {
+function useCooldownTimer() {
 	const [timeLeft, setTimeLeft] = useState("");
 
 	useEffect(() => {
-		const updateCountdown = () => {
+		const update = () => {
 			const now = new Date();
-			const end = getPeriodEndDate(period);
+			const end = getCooldownEndDate();
 			const diff = end.getTime() - now.getTime();
 
 			if (diff <= 0) {
@@ -59,11 +47,11 @@ function useCountdown(period: LeaderboardPeriod) {
 			setTimeLeft(`${days}d ${hours}h ${minutes}m`);
 		};
 
-		updateCountdown();
-		const interval = setInterval(updateCountdown, 60 * 1000); // update every minute
+		update();
+		const interval = setInterval(update, 60 * 1000); // every minute
 
 		return () => clearInterval(interval);
-	}, [period]);
+	}, []);
 
 	return timeLeft;
 }
@@ -79,7 +67,7 @@ function LeaderboardPage() {
 		error,
 	} = useLeaderboardStore();
 
-	const timeLeft = useCountdown(period);
+	const timeLeft = useCooldownTimer();
 
 	useEffect(() => {
 		fetchLeaderboard(period);
@@ -147,9 +135,7 @@ function LeaderboardPage() {
 
 				{/* Cooldown Timer */}
 				<div className='mb-6 text-sm text-center text-muted-foreground'>
-					⏳ Time remaining in{" "}
-					<span className='font-semibold text-white'>{period}</span>{" "}
-					leaderboard:{" "}
+					⏳ Time remaining until the end of the month:{" "}
 					<span className='font-semibold text-white'>{timeLeft}</span>
 				</div>
 

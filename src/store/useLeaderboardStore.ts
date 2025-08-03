@@ -6,7 +6,6 @@ export interface LeaderboardPlayer {
 	rank: number;
 	username: string;
 	wager: number;
-
 	isFeatured?: boolean;
 }
 
@@ -21,56 +20,56 @@ interface LeaderboardState {
 }
 
 const API_URL = "https://mokingdata.onrender.com/api/affiliates";
-// const API_URL = "http://localhost:3000/api/affiliates";
 
 const getDateRange = (
 	period: LeaderboardPeriod
 ): { start_at: string; end_at: string } => {
 	const now = new Date();
 	const endDate = new Date(now);
-	endDate.setHours(23, 59, 59, 999); // End of day
+	endDate.setHours(23, 59, 59, 999); // End of today
 
 	if (period === "weekly") {
-		const startDate = new Date(now);
-		startDate.setDate(now.getDate() - 7); // 7 days ago
-		startDate.setHours(0, 0, 0, 0); // Start of day
+		// Weekly = from 1st day of current month until today
+		const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+		startDate.setHours(0, 0, 0, 0);
 
 		return {
 			start_at: startDate.toISOString().split("T")[0],
 			end_at: endDate.toISOString().split("T")[0],
 		};
 	} else {
-		// Monthly
+		// Monthly = full current month (1st to last day)
 		const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-		startDate.setHours(0, 0, 0, 0); // Start of day
+		startDate.setHours(0, 0, 0, 0);
+
+		const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+		lastDay.setHours(23, 59, 59, 999);
 
 		return {
 			start_at: startDate.toISOString().split("T")[0],
-			end_at: endDate.toISOString().split("T")[0],
+			end_at: lastDay.toISOString().split("T")[0],
 		};
 	}
 };
 
 const processApiData = (data: any): LeaderboardPlayer[] => {
-	// Check if we have the affiliates array in the response
 	if (!data?.affiliates || !Array.isArray(data.affiliates)) {
 		console.error("Invalid API response structure - missing affiliates array");
 		return [];
 	}
 
 	return data.affiliates
-		.filter((item: any) => item && item.username) // Filter out invalid items
-		.map((item: any, index: number) => ({
-			rank: index + 1,
+		.filter((item: any) => item && item.username)
+		.map((item: any) => ({
+			rank: 0, // will assign later after sorting
 			username: item.username,
 			wager: parseFloat(item.wagered_amount) || 0,
-			profit: 0, // The API response doesn't show profit, set to 0 or adjust if needed
 			isFeatured: item.username.toLowerCase().includes("5moking"),
 		}))
-		.sort((a: any, b: any) => b.wager - a.wager) // Sort by wager descending
-		.map((player: any, idx: number) => ({
+		.sort((a, b) => b.wager - a.wager)
+		.map((player, idx) => ({
 			...player,
-			rank: idx + 1, // Re-rank after sorting
+			rank: idx + 1,
 		}));
 };
 
@@ -101,7 +100,6 @@ export const useLeaderboardStore = create<LeaderboardState>((set, get) => ({
 			}
 
 			const data = await response.json();
-			console.log("API Response:", data); // For debugging
 
 			const processedData = processApiData(data);
 
@@ -111,7 +109,6 @@ export const useLeaderboardStore = create<LeaderboardState>((set, get) => ({
 				set({ monthlyLeaderboard: processedData });
 			}
 		} catch (error) {
-			console.error("Failed to fetch leaderboard:", error);
 			set({
 				error: error instanceof Error ? error.message : "Unknown error",
 				weeklyLeaderboard: period === "weekly" ? [] : get().weeklyLeaderboard,
