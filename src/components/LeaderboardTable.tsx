@@ -33,13 +33,13 @@ function maskUsername(username: string): string {
 const PRIZES = {
 	weekly: {
 		1: 125,
-		2: 25,
-		3: 10,
+		2: 75,
+		3: 15,
 	},
 	monthly: {
-		1: 300,
-		2: 200,
-		3: 50,
+		1: 500,
+		2: 250,
+		3: 100,
 	},
 };
 
