@@ -1,8 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { LeaderboardTable } from "@/components/LeaderboardTable";
-import { useLeaderboardStore } from "@/store/useLeaderboardStore";
+import {
+	useLeaderboardStore,
+	LeaderboardPeriod,
+	LeaderboardPlayer,
+} from "@/store/useLeaderboardStore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Crown, Info, Loader2, Trophy, Award, Medal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +18,56 @@ import {
 } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+// Utility: Get leaderboard period end date
+function getPeriodEndDate(period: LeaderboardPeriod): Date {
+	const now = new Date();
+	if (period === "weekly") {
+		// Calculate next Sunday 23:59:59.999 as end of week
+		const end = new Date(now);
+		const day = now.getDay(); // 0=Sun, 1=Mon ... 6=Sat
+		const daysUntilSunday = (7 - day) % 7; // days to next Sunday (0 if today is Sunday)
+		end.setDate(now.getDate() + daysUntilSunday);
+		end.setHours(23, 59, 59, 999);
+		return end;
+	} else {
+		// Monthly: last day of current month 23:59:59.999
+		const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+		end.setHours(23, 59, 59, 999);
+		return end;
+	}
+}
+
+// Hook: Countdown timer string for period
+function useCountdown(period: LeaderboardPeriod) {
+	const [timeLeft, setTimeLeft] = useState("");
+
+	useEffect(() => {
+		const updateCountdown = () => {
+			const now = new Date();
+			const end = getPeriodEndDate(period);
+			const diff = end.getTime() - now.getTime();
+
+			if (diff <= 0) {
+				setTimeLeft("0d 0h 0m");
+				return;
+			}
+
+			const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+			const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+			const minutes = Math.floor((diff / (1000 * 60)) % 60);
+
+			setTimeLeft(`${days}d ${hours}h ${minutes}m`);
+		};
+
+		updateCountdown();
+		const interval = setInterval(updateCountdown, 60 * 1000); // update every minute
+
+		return () => clearInterval(interval);
+	}, [period]);
+
+	return timeLeft;
+}
+
 function LeaderboardPage() {
 	const {
 		weeklyLeaderboard,
@@ -24,6 +78,8 @@ function LeaderboardPage() {
 		isLoading,
 		error,
 	} = useLeaderboardStore();
+
+	const timeLeft = useCountdown(period);
 
 	useEffect(() => {
 		fetchLeaderboard(period);
@@ -66,10 +122,10 @@ function LeaderboardPage() {
 					</TooltipProvider>
 				</div>
 
-				<div className='p-6 mb-8 rounded-lg glass-card'>
+				<div className='p-6 mb-4 rounded-lg glass-card'>
 					<p className='mb-4'>
 						Use affiliate code{" "}
-						<span className='font-semibold text-primary'>5MOKING</span> on
+						<span className='font-semibold text-primary'>5MOKING</span> on{" "}
 						<a
 							href='https://rainbet.com'
 							target='_blank'
@@ -77,7 +133,7 @@ function LeaderboardPage() {
 							className='mx-1 text-secondary hover:text-secondary/80'
 						>
 							Rainbet
-						</a>
+						</a>{" "}
 						to appear on this leaderboard and compete for rewards!
 					</p>
 
@@ -87,6 +143,14 @@ function LeaderboardPage() {
 							<span className='ml-2 font-bold text-primary'>5MOKING</span>
 						</div>
 					</div>
+				</div>
+
+				{/* Cooldown Timer */}
+				<div className='mb-6 text-sm text-center text-muted-foreground'>
+					⏳ Time remaining in{" "}
+					<span className='font-semibold text-white'>{period}</span>{" "}
+					leaderboard:{" "}
+					<span className='font-semibold text-white'>{timeLeft}</span>
 				</div>
 
 				{error && (
