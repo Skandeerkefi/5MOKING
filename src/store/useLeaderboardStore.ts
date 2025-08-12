@@ -19,7 +19,7 @@ interface LeaderboardState {
 	fetchLeaderboard: (period: LeaderboardPeriod) => Promise<void>;
 }
 
-const API_URL = "https://mokingdata.onrender.com/api/affiliates";
+const API_URL = "https://mokingdata-ehej.onrender.com/api/affiliates";
 
 const getDateRange = (
 	period: LeaderboardPeriod
