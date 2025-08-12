@@ -268,7 +268,10 @@ function RewardCard({
 
 				{player ? (
 					<>
-						<p className='font-medium'>{player.username}</p>
+						<p className='font-medium'>
+							{player.username.charAt(0) +
+								"*".repeat(player.username.length - 1)}
+						</p>
 						<p className='text-muted-foreground'>
 							${player.wager.toLocaleString()}
 						</p>
