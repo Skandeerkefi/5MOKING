@@ -91,7 +91,7 @@ function HomePage() {
 							live everyday at
 							<span className='font-bold text-secondary'>
 								{" "}
-								9 PM (American Time)
+								10 PM (American Time) and 9 PM (Asia Time)
 							</span>
 						</p>
 
