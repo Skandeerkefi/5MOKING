@@ -82,6 +82,34 @@ function HomePage() {
 						</div>
 					</div>
 				</section>
+				{/* Schedule Section */}
+				<section className='py-12 md:py-16 bg-primary/5 border-y border-white/10'>
+					<div className='container text-center'>
+						<h2 className='mb-6 text-2xl font-bold'>Stream Schedule</h2>
+						<p className='mb-4 text-lg text-muted-foreground'>
+							Join <span className='font-semibold text-primary'>5MOKING</span>{" "}
+							live everyday at
+							<span className='font-bold text-secondary'>
+								{" "}
+								9 PM (American Time)
+							</span>
+						</p>
+
+						<div className='flex justify-center'>
+							<Button size='lg' asChild>
+								<a
+									href='https://kick.com/5moking'
+									target='_blank'
+									rel='noreferrer'
+									className='flex items-center gap-2'
+								>
+									Watch Live on Kick
+									<ArrowRight className='w-4 h-4' />
+								</a>
+							</Button>
+						</div>
+					</div>
+				</section>
 
 				{/* Leaderboard Preview Section */}
 				<section className='container py-12 md:py-16'>
