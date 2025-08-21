@@ -63,7 +63,7 @@ export function Navbar() {
 				<div className='flex items-center gap-2'>
 					<Link to='/' className='flex items-center gap-2'>
 						<img
-							src='https://files.kick.com/images/user/48867484/profile_image/conversion/ae281c89-eae8-44d5-ab0c-6bb20b93ee6d-fullsize.webp'
+							src='https://i.ibb.co/gbwdXSCC/Capture-d-cran-2025-08-21-145729.png'
 							alt='5MOKING Logo'
 							className='object-cover w-10 h-10 border rounded-full shadow-sm border-white/20'
 						/>
@@ -100,34 +100,36 @@ export function Navbar() {
 						</div>
 
 						{/* Authentication Buttons */}
-						{ <div className='flex items-center gap-2'>
-							{user ? (
-								<>
-									<Button variant='ghost' size='sm' asChild>
-										<Link to='/' className='flex items-center gap-1'>
-											<User className='w-4 h-4' />
-											<span>{user.username}</span>
-										</Link>
-									</Button>
-									<Button variant='outline' size='sm' onClick={logout}>
-										<LogOut className='w-4 h-4 mr-1' />
-										Logout
-									</Button>
-								</>
-							) : (
-								<>
-									<Button variant='outline' size='sm' asChild>
-										<Link to='/login' className='flex items-center'>
-											<LogIn className='w-4 h-4 mr-1' />
-											Login
-										</Link>
-									</Button>
-									<Button size='sm' asChild>
-										<Link to='/signup'>Sign Up</Link>
-									</Button>
-								</>
-							)}
-						</div> }
+						{
+							<div className='flex items-center gap-2'>
+								{user ? (
+									<>
+										<Button variant='ghost' size='sm' asChild>
+											<Link to='/' className='flex items-center gap-1'>
+												<User className='w-4 h-4' />
+												<span>{user.username}</span>
+											</Link>
+										</Button>
+										<Button variant='outline' size='sm' onClick={logout}>
+											<LogOut className='w-4 h-4 mr-1' />
+											Logout
+										</Button>
+									</>
+								) : (
+									<>
+										<Button variant='outline' size='sm' asChild>
+											<Link to='/login' className='flex items-center'>
+												<LogIn className='w-4 h-4 mr-1' />
+												Login
+											</Link>
+										</Button>
+										<Button size='sm' asChild>
+											<Link to='/signup'>Sign Up</Link>
+										</Button>
+									</>
+								)}
+							</div>
+						}
 					</div>
 				)}
 

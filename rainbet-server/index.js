@@ -12,7 +12,7 @@ const PORT = 3000;
 
 const allowedOrigins = [
 	"http://localhost:5173",
-	"https://5-moking.vercel.app/",
+	"https://5-moking.vercel.app",
 ];
 
 app.use(
