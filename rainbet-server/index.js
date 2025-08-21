@@ -10,7 +10,27 @@ const fetch = (...args) =>
 const app = express();
 const PORT = 3000;
 
-app.use(cors());
+const allowedOrigins = [
+	"http://localhost:5173",
+	"https://5-moking.vercel.app/",
+];
+
+app.use(
+	cors({
+		origin: function (origin, callback) {
+			// allow requests with no origin like curl or Postman
+			if (!origin) return callback(null, true);
+			if (allowedOrigins.includes(origin)) {
+				return callback(null, true);
+			} else {
+				return callback(new Error("CORS policy: This origin is not allowed"));
+			}
+		},
+		methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+		allowedHeaders: ["Content-Type", "Authorization"],
+		credentials: true,
+	})
+);
 
 app.get("/api/affiliates", async (req, res) => {
 	const { start_at, end_at } = req.query;
