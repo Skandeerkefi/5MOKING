@@ -32,14 +32,14 @@ function maskUsername(username: string): string {
 
 const PRIZES = {
 	weekly: {
-		1: 125,
-		2: 75,
-		3: 15,
+		1: { amount: 125 },
+		2: { amount: 75 },
+		3: { amount: 15 },
 	},
 	monthly: {
-		1: { prize: 1000 },
-		2: { prize: 250, minWager: 30000 },
-		3: { prize: 100, minWager: 10000 }, // ✅ only 3rd place has min wager
+		1: { amount: 1000 },
+		2: { amount: 250, minWager: 30000 },
+		3: { amount: 100, minWager: 10000 }, // ✅ condition only for 3rd
 	},
 };
 
