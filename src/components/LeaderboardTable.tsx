@@ -7,7 +7,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Crown } from "lucide-react";
+import { Crown, Info } from "lucide-react"; // Added Info icon
 
 type LeaderboardPeriod = "weekly" | "monthly";
 
@@ -32,15 +32,20 @@ function maskUsername(username: string): string {
 
 const PRIZES = {
 	weekly: {
-		1: { amount: 125 },
-		2: { amount: 75 },
-		3: { amount: 15 },
+		1: 125,
+		2: 75,
+		3: 15,
 	},
 	monthly: {
-		1: { amount: 1000 },
-		2: { amount: 250, minWager: 30000 },
-		3: { amount: 100, minWager: 10000 }, // ✅ condition only for 3rd
+		1: 1000,
+		2: 250,
+		3: 100,
 	},
+};
+
+const MIN_WAGER = {
+	2: 30000,
+	3: 10000,
 };
 
 export function LeaderboardTable({ period, data }: LeaderboardTableProps) {
@@ -58,6 +63,8 @@ export function LeaderboardTable({ period, data }: LeaderboardTableProps) {
 				<TableBody>
 					{data.map((player) => {
 						const prize = PRIZES[period][player.rank as 1 | 2 | 3] || 0;
+						const minWager = MIN_WAGER[player.rank as 2 | 3];
+
 						return (
 							<TableRow
 								key={maskUsername(player.username)}
@@ -94,8 +101,14 @@ export function LeaderboardTable({ period, data }: LeaderboardTableProps) {
 								<TableCell className='text-right'>
 									${player.wager.toLocaleString()}
 								</TableCell>
-								<TableCell className='text-right'>
-									{prize > 0 ? `$${prize}` : "-"}
+								<TableCell className='flex flex-col items-end gap-1 text-right'>
+									<span>{prize > 0 ? `$${prize}` : "-"}</span>
+									{minWager && (
+										<span className='flex items-center gap-1 text-xs text-gray-400'>
+											<Info className='w-3 h-3' /> MIN WAGER $
+											{minWager.toLocaleString()}
+										</span>
+									)}
 								</TableCell>
 							</TableRow>
 						);
