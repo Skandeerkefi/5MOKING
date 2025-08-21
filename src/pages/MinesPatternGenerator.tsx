@@ -25,8 +25,8 @@ const MinesPatternGenerator: React.FC = () => {
 		let actualDiamonds = numberOfDiamonds;
 
 		if (patternMode === "random") {
-			actualMines = Math.floor(Math.random() * 15) + 5; // 5-19 mines
-			actualDiamonds = Math.floor(Math.random() * 3) + 1; // 1-3 diamonds
+			actualMines = Math.floor(Math.random() * 24) + 1; // 5-19 mines
+			actualDiamonds = Math.floor(Math.random() * 24) + 1; // 1-3 diamonds
 		}
 
 		const newBoard = Array(BOARD_SIZE)
@@ -74,7 +74,7 @@ const MinesPatternGenerator: React.FC = () => {
 
 	const handleDiamondsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = parseInt(e.target.value) || 1;
-		setNumberOfDiamonds(Math.min(Math.max(value, 1), 5));
+		setNumberOfDiamonds(Math.min(Math.max(value, 1), 24));
 	};
 
 	const renderCell = (cell: CellType) => {
@@ -160,7 +160,7 @@ const MinesPatternGenerator: React.FC = () => {
 								id='diamonds'
 								type='number'
 								min='1'
-								max='5'
+								max='24'
 								value={numberOfDiamonds}
 								onChange={handleDiamondsChange}
 							/>
