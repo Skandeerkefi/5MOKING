@@ -37,9 +37,9 @@ const PRIZES = {
 		3: 15,
 	},
 	monthly: {
-		1: 500,
-		2: 250,
-		3: 100,
+		1: { prize: 1000 },
+		2: { prize: 250, minWager: 30000 },
+		3: { prize: 100, minWager: 10000 }, // ✅ only 3rd place has min wager
 	},
 };
 
