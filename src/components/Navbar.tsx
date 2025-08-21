@@ -100,7 +100,7 @@ export function Navbar() {
 						</div>
 
 						{/* Authentication Buttons */}
-						{/* <div className='flex items-center gap-2'>
+						{ <div className='flex items-center gap-2'>
 							{user ? (
 								<>
 									<Button variant='ghost' size='sm' asChild>
@@ -127,7 +127,7 @@ export function Navbar() {
 									</Button>
 								</>
 							)}
-						</div> */}
+						</div> }
 					</div>
 				)}
 
