@@ -10,7 +10,7 @@ import NotFoundPage from "@/pages/NotFoundPage";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuthStore } from "@/store/useAuthStore";
-import Mines from "@/pages/Mines";
+import MinesPatternGenerator from "@/pages/MinesPatternGenerator";
 
 function App() {
 	const loadFromStorage = useAuthStore((state) => state.loadFromStorage);
@@ -40,7 +40,10 @@ function App() {
 					<Route path='/login' element={<LoginPage />} />
 					<Route path='/signup' element={<SignupPage />} />
 					<Route path='*' element={<NotFoundPage />} />
-					<Route path='/mines' element={<Mines />} />
+					<Route
+						path='/MinesPatternGenerator'
+						element={<MinesPatternGenerator />}
+					/>
 				</Routes>
 			</BrowserRouter>
 			<Toaster />
