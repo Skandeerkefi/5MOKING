@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import "./Mines.css";
 
-type CellType = "mine" | "diamond" | "empty";
+type CellType = "mine" | "diamond";
 type PatternMode = "random" | "custom";
 
 const MinesPatternGenerator: React.FC = () => {
 	const [numberOfMines, setNumberOfMines] = useState<number>(8);
-	const [numberOfDiamonds, setNumberOfDiamonds] = useState<number>(1);
+	const [numberOfDiamonds, setNumberOfDiamonds] = useState<number>(17);
 	const [patternMode, setPatternMode] = useState<PatternMode>("random");
 	const [board, setBoard] = useState<CellType[][]>([]);
 	const [generatedPatterns, setGeneratedPatterns] = useState<CellType[][][]>(
@@ -25,13 +25,20 @@ const MinesPatternGenerator: React.FC = () => {
 		let actualDiamonds = numberOfDiamonds;
 
 		if (patternMode === "random") {
-			actualMines = Math.floor(Math.random() * 24) + 1; // 5-19 mines
-			actualDiamonds = Math.floor(Math.random() * 24) + 1; // 1-3 diamonds
+			actualMines = Math.floor(Math.random() * 24) + 1; // 1-24 mines
+			actualDiamonds = Math.floor(Math.random() * 24) + 1; // 1-24 diamonds
 		}
 
-		const newBoard = Array(BOARD_SIZE)
+		// Ensure total cells do not exceed board size
+		const totalCells = BOARD_SIZE * BOARD_SIZE;
+		if (actualMines + actualDiamonds > totalCells) {
+			actualDiamonds = totalCells - actualMines;
+		}
+
+		// Start with all diamonds
+		const newBoard: CellType[][] = Array(BOARD_SIZE)
 			.fill(null)
-			.map(() => Array(BOARD_SIZE).fill("empty"));
+			.map(() => Array(BOARD_SIZE).fill("diamond"));
 
 		// Place mines
 		let minesPlaced = 0;
@@ -39,21 +46,9 @@ const MinesPatternGenerator: React.FC = () => {
 			const row = Math.floor(Math.random() * BOARD_SIZE);
 			const col = Math.floor(Math.random() * BOARD_SIZE);
 
-			if (newBoard[row][col] === "empty") {
+			if (newBoard[row][col] !== "mine") {
 				newBoard[row][col] = "mine";
 				minesPlaced++;
-			}
-		}
-
-		// Place diamonds
-		let diamondsPlaced = 0;
-		while (diamondsPlaced < actualDiamonds) {
-			const row = Math.floor(Math.random() * BOARD_SIZE);
-			const col = Math.floor(Math.random() * BOARD_SIZE);
-
-			if (newBoard[row][col] === "empty") {
-				newBoard[row][col] = "diamond";
-				diamondsPlaced++;
 			}
 		}
 
@@ -78,21 +73,16 @@ const MinesPatternGenerator: React.FC = () => {
 	};
 
 	const renderCell = (cell: CellType) => {
-		switch (cell) {
-			case "mine":
-				return <div className='pattern-cell mine'>💣</div>;
-			case "diamond":
-				return <div className='pattern-cell diamond'>💎</div>;
-			default:
-				return <div className='pattern-cell empty' />;
-		}
+		return cell === "mine" ? (
+			<div className='pattern-cell mine'>💣</div>
+		) : (
+			<div className='pattern-cell diamond'>💎</div>
+		);
 	};
 
 	const calculateProbability = (row: number, col: number) => {
-		// Simple probability calculation based on surrounding cells
+		// Basic probability: count mines around
 		let mineCount = 0;
-		let diamondCount = 0;
-
 		for (
 			let r = Math.max(0, row - 1);
 			r <= Math.min(BOARD_SIZE - 1, row + 1);
@@ -105,36 +95,33 @@ const MinesPatternGenerator: React.FC = () => {
 			) {
 				if (r === row && c === col) continue;
 				if (board[r][c] === "mine") mineCount++;
-				if (board[r][c] === "diamond") diamondCount++;
 			}
 		}
 
-		// Very basic probability estimation
-		if (mineCount > 0 && diamondCount > 0) return "50%";
-		if (mineCount > 0) return "High risk";
-		if (diamondCount > 0) return "Good chance";
-		return "Unknown";
+		if (mineCount === 0) return "Safe";
+		if (mineCount <= 2) return "Medium risk";
+		return "High risk";
 	};
 
 	return (
 		<div className='mines-pattern-generator'>
 			<h1>Mines Pattern Generator</h1>
-			<p className='subtitle'>Generate patterns to try in real mines games</p>
+			<p className='subtitle'>Generate patterns with only mines and diamonds</p>
 
 			<div className='pattern-selector'>
-				<h3>Pattern Generation Mode:</h3>
+				<h3>Pattern Mode:</h3>
 				<div className='pattern-buttons'>
 					<button
 						className={patternMode === "random" ? "active" : ""}
 						onClick={() => setPatternMode("random")}
 					>
-						Random Pattern
+						Random
 					</button>
 					<button
 						className={patternMode === "custom" ? "active" : ""}
 						onClick={() => setPatternMode("custom")}
 					>
-						Custom Settings
+						Custom
 					</button>
 				</div>
 			</div>
@@ -169,11 +156,11 @@ const MinesPatternGenerator: React.FC = () => {
 				)}
 
 				<button onClick={generateBoard} className='generate-btn'>
-					Generate New Pattern
+					Generate Pattern
 				</button>
 
 				<button onClick={generateRandomPattern} className='random-btn'>
-					Randomize Pattern
+					Randomize
 				</button>
 			</div>
 
@@ -207,12 +194,6 @@ const MinesPatternGenerator: React.FC = () => {
 							{board.flat().filter((cell) => cell === "diamond").length}
 						</span>
 					</div>
-					<div className='stat'>
-						<span className='stat-label'>Empty Cells:</span>
-						<span className='stat-value'>
-							{board.flat().filter((cell) => cell === "empty").length}
-						</span>
-					</div>
 				</div>
 			</div>
 
@@ -227,11 +208,7 @@ const MinesPatternGenerator: React.FC = () => {
 									<div key={rowIndex} className='mini-row'>
 										{row.map((cell, colIndex) => (
 											<div key={colIndex} className='mini-cell'>
-												{cell === "mine"
-													? "💣"
-													: cell === "diamond"
-													? "💎"
-													: "◻"}
+												{cell === "mine" ? "💣" : "💎"}
 											</div>
 										))}
 									</div>
@@ -240,42 +217,6 @@ const MinesPatternGenerator: React.FC = () => {
 						</div>
 					))}
 				</div>
-			</div>
-
-			<div className='tips-section'>
-				<h2>Mines Game Tips</h2>
-				<div className='tips'>
-					<div className='tip'>
-						<h4>Pattern Recognition</h4>
-						<p>
-							Look for clusters of mines - they often appear in groups rather
-							than being evenly distributed.
-						</p>
-					</div>
-					<div className='tip'>
-						<h4>Edge Strategy</h4>
-						<p>
-							Starting from edges or corners can sometimes be safer in mines
-							games.
-						</p>
-					</div>
-					<div className='tip'>
-						<h4>Risk Management</h4>
-						<p>
-							Don't chase losses. Set a limit for yourself before you start
-							playing.
-						</p>
-					</div>
-				</div>
-			</div>
-
-			<div className='disclaimer'>
-				<p>
-					This is a pattern generator for educational purposes only. Gambling
-					involves risk. Please gamble responsibly and only with money you can
-					afford to lose. You must be of legal age to gamble in your
-					jurisdiction.
-				</p>
 			</div>
 		</div>
 	);
