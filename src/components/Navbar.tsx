@@ -44,16 +44,16 @@ export function Navbar() {
 			name: "Leaderboard",
 			icon: <Crown className='w-4 h-4 mr-1' />,
 		},
-		// {
-		// 	path: "/slot-calls",
-		// 	name: "Slot Calls",
-		// 	icon: <Users className='w-4 h-4 mr-1' />,
-		// },
-		// {
-		// 	path: "/giveaways",
-		// 	name: "Giveaways",
-		// 	icon: <Gift className='w-4 h-4 mr-1' />,
-		// },
+		{
+			path: "/slot-calls",
+			name: "Slot Calls",
+			icon: <Users className='w-4 h-4 mr-1' />,
+		},
+		{
+			path: "/giveaways",
+			name: "Giveaways",
+			icon: <Gift className='w-4 h-4 mr-1' />,
+		},
 	];
 
 	return (
