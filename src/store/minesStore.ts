@@ -1,34 +1,43 @@
 import { create } from "zustand";
 
+type CellType = "mine" | "diamond" | "empty";
+type GameStatus = "idle" | "playing" | "won" | "lost";
+type PatternMode = "random" | "custom";
+
 interface GameState {
 	numberOfMines: number;
+	numberOfDiamonds: number;
 	betSize: number;
 	multiplier: number;
 	winAmount: number;
 	winningChance: number;
 	minimalIncreaseOnLoss: number;
-	board: Array<Array<"mine" | "diamond" | "empty">>;
-	revealed: Array<Array<boolean>>;
-	gameStatus: "idle" | "playing" | "won" | "lost";
-	totalDiamonds: number;
+	board: CellType[][];
+	revealed: boolean[][];
+	gameStatus: GameStatus;
 	foundDiamonds: number;
+	patternMode: PatternMode;
+	totalClicks: number;
 }
 
 interface GameActions {
 	setNumberOfMines: (mines: number) => void;
+	setNumberOfDiamonds: (diamonds: number) => void;
 	setBetSize: (bet: number) => void;
+	setPatternMode: (mode: PatternMode) => void;
 	generateBoard: () => void;
 	revealCell: (row: number, col: number) => void;
 	resetGame: () => void;
 	calculateMultiplier: () => void;
+	generateRandomPattern: () => void;
 }
 
 const BOARD_SIZE = 5;
-const DIAMONDS_COUNT = 1;
 
 export const useMinesStore = create<GameState & GameActions>((set, get) => ({
 	// Initial state
 	numberOfMines: 8,
+	numberOfDiamonds: 1,
 	betSize: 2,
 	multiplier: 1.0,
 	winAmount: 0,
@@ -41,22 +50,42 @@ export const useMinesStore = create<GameState & GameActions>((set, get) => ({
 		.fill(null)
 		.map(() => Array(BOARD_SIZE).fill(false)),
 	gameStatus: "idle",
-	totalDiamonds: DIAMONDS_COUNT,
 	foundDiamonds: 0,
+	patternMode: "random",
+	totalClicks: 0,
 
 	// Actions
 	setNumberOfMines: (mines) => {
-		set({ numberOfMines: mines });
+		set({ numberOfMines: Math.min(Math.max(mines, 1), 24) });
+		get().calculateMultiplier();
+	},
+
+	setNumberOfDiamonds: (diamonds) => {
+		set({ numberOfDiamonds: Math.min(Math.max(diamonds, 1), 5) });
 		get().calculateMultiplier();
 	},
 
 	setBetSize: (bet) => {
-		set({ betSize: bet });
+		set({ betSize: Math.max(bet, 0.1) });
 		get().calculateMultiplier();
 	},
 
+	setPatternMode: (mode) => {
+		set({ patternMode: mode });
+	},
+
 	generateBoard: () => {
-		const { numberOfMines } = get();
+		const { numberOfMines, numberOfDiamonds, patternMode } = get();
+
+		// If in random mode, generate random number of mines and diamonds
+		let actualMines = numberOfMines;
+		let actualDiamonds = numberOfDiamonds;
+
+		if (patternMode === "random") {
+			actualMines = Math.floor(Math.random() * 15) + 5; // 5-19 mines
+			actualDiamonds = Math.floor(Math.random() * 3) + 1; // 1-3 diamonds
+		}
+
 		const newBoard = Array(BOARD_SIZE)
 			.fill(null)
 			.map(() => Array(BOARD_SIZE).fill("empty"));
@@ -66,7 +95,7 @@ export const useMinesStore = create<GameState & GameActions>((set, get) => ({
 
 		// Place mines
 		let minesPlaced = 0;
-		while (minesPlaced < numberOfMines) {
+		while (minesPlaced < actualMines) {
 			const row = Math.floor(Math.random() * BOARD_SIZE);
 			const col = Math.floor(Math.random() * BOARD_SIZE);
 
@@ -78,7 +107,7 @@ export const useMinesStore = create<GameState & GameActions>((set, get) => ({
 
 		// Place diamonds
 		let diamondsPlaced = 0;
-		while (diamondsPlaced < DIAMONDS_COUNT) {
+		while (diamondsPlaced < actualDiamonds) {
 			const row = Math.floor(Math.random() * BOARD_SIZE);
 			const col = Math.floor(Math.random() * BOARD_SIZE);
 
@@ -94,8 +123,16 @@ export const useMinesStore = create<GameState & GameActions>((set, get) => ({
 			gameStatus: "playing",
 			foundDiamonds: 0,
 			winAmount: 0,
+			totalClicks: 0,
+			numberOfMines: actualMines,
+			numberOfDiamonds: actualDiamonds,
 		});
 		get().calculateMultiplier();
+	},
+
+	generateRandomPattern: () => {
+		set({ patternMode: "random" });
+		get().generateBoard();
 	},
 
 	revealCell: (row, col) => {
@@ -105,7 +142,8 @@ export const useMinesStore = create<GameState & GameActions>((set, get) => ({
 			gameStatus,
 			betSize,
 			foundDiamonds,
-			totalDiamonds,
+			numberOfDiamonds,
+			totalClicks,
 		} = get();
 
 		if (gameStatus !== "playing" || revealed[row][col]) return;
@@ -113,12 +151,15 @@ export const useMinesStore = create<GameState & GameActions>((set, get) => ({
 		const newRevealed = revealed.map((arr) => [...arr]);
 		newRevealed[row][col] = true;
 
+		const newTotalClicks = totalClicks + 1;
+
 		if (board[row][col] === "mine") {
 			// Game over - hit a mine
 			set({
 				revealed: newRevealed,
 				gameStatus: "lost",
 				winAmount: 0,
+				totalClicks: newTotalClicks,
 			});
 		} else if (board[row][col] === "diamond") {
 			// Found a diamond
@@ -126,7 +167,7 @@ export const useMinesStore = create<GameState & GameActions>((set, get) => ({
 			let newGameStatus = gameStatus;
 			let newWinAmount = 0;
 
-			if (newFoundDiamonds === totalDiamonds) {
+			if (newFoundDiamonds === numberOfDiamonds) {
 				// Found all diamonds - win
 				newGameStatus = "won";
 				newWinAmount = betSize * get().multiplier;
@@ -137,14 +178,17 @@ export const useMinesStore = create<GameState & GameActions>((set, get) => ({
 				foundDiamonds: newFoundDiamonds,
 				gameStatus: newGameStatus,
 				winAmount: newWinAmount,
+				totalClicks: newTotalClicks,
 			});
 		} else {
 			// Empty cell
-			set({ revealed: newRevealed });
+			set({ revealed: newRevealed, totalClicks: newTotalClicks });
 		}
 	},
 
 	resetGame: () => {
+		const { patternMode } = get();
+
 		set({
 			revealed: Array(BOARD_SIZE)
 				.fill(null)
@@ -153,24 +197,37 @@ export const useMinesStore = create<GameState & GameActions>((set, get) => ({
 			foundDiamonds: 0,
 			winAmount: 0,
 			multiplier: 1.0,
+			totalClicks: 0,
 		});
+
+		// Reset to default values if not in random mode
+		if (patternMode === "custom") {
+			set({
+				numberOfMines: 8,
+				numberOfDiamonds: 1,
+			});
+		}
 	},
 
 	calculateMultiplier: () => {
-		const { numberOfMines, betSize } = get();
+		const { numberOfMines, numberOfDiamonds, betSize, totalClicks } = get();
 		const totalCells = BOARD_SIZE * BOARD_SIZE;
 		const safeCells = totalCells - numberOfMines;
 
-		// Simplified multiplier calculation
-		const baseMultiplier = 1 + (numberOfMines / safeCells) * 5;
+		// More realistic multiplier calculation
+		const riskFactor = numberOfMines / totalCells;
+		const diamondBonus = numberOfDiamonds * 0.3;
+		const clickPenalty = totalClicks * 0.05;
+
+		const baseMultiplier = 1 + riskFactor * 10 + diamondBonus - clickPenalty;
 		const winningChance = (safeCells / totalCells) * 100;
-		const minimalIncrease = 0.8 + Math.random() * 0.2; // Random value between 0.8-1.0
+		const minimalIncrease = 0.85 + Math.random() * 0.1; // Random value between 0.85-0.95
 
 		set({
-			multiplier: parseFloat(baseMultiplier.toFixed(2)),
+			multiplier: parseFloat(Math.max(baseMultiplier, 1.0).toFixed(2)),
 			winningChance: parseFloat(winningChance.toFixed(2)),
 			minimalIncreaseOnLoss: parseFloat(minimalIncrease.toFixed(5)),
-			winAmount: betSize * baseMultiplier,
+			winAmount: parseFloat((betSize * baseMultiplier).toFixed(2)),
 		});
 	},
 }));
