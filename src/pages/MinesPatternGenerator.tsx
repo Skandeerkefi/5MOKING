@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./Mines.css";
-
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 type CellType = "mine" | "diamond";
 type PatternMode = "random" | "custom";
 

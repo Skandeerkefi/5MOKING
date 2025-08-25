@@ -83,28 +83,44 @@ function HomePage() {
 					</div>
 				</section>
 				{/* Schedule Section */}
-				<section className='py-12 md:py-16 bg-primary/5 border-y border-white/10'>
-					<div className='container text-center'>
-						<h2 className='mb-6 text-2xl font-bold'>Stream Schedule</h2>
-						<p className='mb-4 text-lg text-muted-foreground'>
-							Join <span className='font-semibold text-primary'>5MOKING</span>{" "}
-							live everyday at
-							<span className='font-bold text-secondary'>
-								{" "}
-								10 PM (American Time) and 9 PM (Asia Time)
-							</span>
+				<section className='py-16 md:py-24 bg-primary/5 border-y border-white/10'>
+					<div className='container max-w-3xl mx-auto text-center'>
+						{/* Title */}
+						<h2 className='mb-8 text-4xl font-extrabold tracking-tight md:text-5xl'>
+							Stream Schedule
+						</h2>
+
+						{/* Subtitle */}
+						<p className='mb-10 text-xl leading-relaxed md:text-2xl text-muted-foreground'>
+							Join <span className='font-bold text-primary'>5MOKING</span> live
+							every day at
 						</p>
 
+						{/* BIG Times */}
+						<div className='mb-12'>
+							<span className='block mb-4 text-4xl font-extrabold md:text-6xl text-secondary'>
+								9 PM EST
+							</span>
+							<span className='block text-4xl font-extrabold md:text-6xl text-secondary'>
+								7 AM EST
+							</span>
+						</div>
+
+						{/* CTA Button */}
 						<div className='flex justify-center'>
-							<Button size='lg' asChild>
+							<Button
+								size='lg'
+								asChild
+								className='px-8 py-6 text-lg font-semibold transition-transform shadow-lg md:text-xl rounded-2xl hover:scale-105'
+							>
 								<a
 									href='https://kick.com/5moking'
 									target='_blank'
 									rel='noreferrer'
-									className='flex items-center gap-2'
+									className='flex items-center gap-3'
 								>
 									Watch Live on Kick
-									<ArrowRight className='w-4 h-4' />
+									<ArrowRight className='w-6 h-6' />
 								</a>
 							</Button>
 						</div>
